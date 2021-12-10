@@ -4,12 +4,19 @@ from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 import pandas as pd
 import os
-from selenium.webdriver.support.ui import Select
+# Only things you need to import is selenium for the webpage automation stuff
+# (and download the chromedriver's appropriate version and put it somewhere)
+# For the pandas/excel stuff you need pandas, openpyxl, and xlsxwriter
 
+
+# Go to Career Positions page
 driver = webdriver.Chrome('chromedriver/chromedriver.exe')
 driver.get("https://www.rocketlabusa.com/careers/positions/")
+
+# Select relevant filters
 location_dropdown = driver.find_element_by_xpath('//*[@id="Jobs"]/div/div[1]/form/div[1]/div/div/div')
 location_dropdown.click()
+# Without this delay it sometimes tries to find the element before it has loaded and returns NoSuchElementException
 time.sleep(.5)
 auckland_option = driver.find_element_by_xpath('//*[@id="Jobs"]/div/div[1]/form/div[1]/div/div/ul/li[2]')
 auckland_option.click()
@@ -18,6 +25,7 @@ positions_button.click()
 time.sleep(.5)
 engineering_option = driver.find_element_by_xpath('//*[@id="Jobs"]/div/div[1]/form/div[2]/div/div/ul/li[6]')
 engineering_option.click()
+# Press "Load More" button as long as its an option
 while True:
     try:
         load_more = driver.find_element_by_xpath('//*[@id="JobsAjaxBtn"]')
@@ -25,6 +33,8 @@ while True:
         time.sleep(.5)
     except NoSuchElementException:
         break
+
+# Get job urls and titles and save in list
 jobs_of_interest = []
 jobs = driver.find_elements_by_class_name('job')
 for job in jobs:
@@ -36,13 +46,13 @@ for job in jobs:
         print(link)
         jobs_of_interest.append((name, link))
 
-# Writing and highlighting of new positions
 
 # Take most recent Rocket Lab Positions data
 previous_positions = pd.read_excel('data/' + sorted(os.listdir('data'))[-1])
 previous_names = [name for name in previous_positions['Title']]
 
 
+# Writing and highlighting of new positions
 def highlight_cells(x):
     string = str(x).upper()
     if string not in previous_names and 'HTTPS' not in string:
